@@ -301,9 +301,9 @@
             </fieldset>
             <button class="submitSearch">Submit</button>
         </form>
-    </section>
+	</section>
 		<script src='https://code.jquery.com/jquery-3.2.1.min.js' integrity='sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4='
-		 crossorigin='anonymous'></script>
+		crossorigin='anonymous'></script>
 		<!-- <script src="public/scripts/main.js"></script> -->
 		<script>
 			// Save API URL
@@ -342,20 +342,13 @@
 				$(".submitSearch").on("click", async function(e){
 					e.preventDefault();
 					const countryData=await app.getDisasterInfoCountries(searchCountryKey);
-					const groupData=await app.getDisasterInfoGroups(searchGroupKey);
-					console.log(countryData) 
 					$.when(
-						countryData[0],groupData[0]
-					).then(function(country, group){
-						console.log(country[0], group[0])
-
-
-
+						countryData[0]
+					).then(function (country) {
+						const resultsArray=(country.data);
+						console.log(resultsArray);
 						
 					})
-					
-
-
 				})
 			}
 
@@ -374,8 +367,14 @@
 									{
 										"field": "country",
 										"value": item,
+									},
+									{
+										"field": 'vulnerable_groups.id',
+										"value": searchGroupKey,
+										"operator":"OR"
 									}
 								],
+
 							},
 
 							"language": {
@@ -395,43 +394,43 @@
 				})
 				return $.when(query);
 			}
+// <!-- 
+// 			app.getDisasterInfoGroups = (...query) => {
+// 					query = query.map((item) => {
+// 						console.log(item)
+// 						return $.ajax({
+// 							url: apiURL,
+// 							method: 'GET',
+// 							dataType: 'json',
+// 							data: {
 
-			app.getDisasterInfoGroups = (...query) => {
-					query = query.map((item) => {
-						console.log(item)
-						return $.ajax({
-							url: apiURL,
-							method: 'GET',
-							dataType: 'json',
-							data: {
+// 								"filter": {
+// 									operator: 'AND',
+// 									conditions: [
+// 										{
+// 											"field": 'vulnerable_groups.id',
+// 											"value": item
+// 										}
+// 									]
+// 								},
 
-								"filter": {
-									operator: 'AND',
-									conditions: [
-										{
-											"field": 'vulnerable_groups.id',
-											"value": item
-										}
-									]
-								},
+// 								"language": {
+// 									"id": 267,
+// 									"name": "English",
+// 									"code": "en"
+// 								},
 
-								"language": {
-									"id": 267,
-									"name": "English",
-									"code": "en"
-								},
+// 								"limit": 10,
+// 								"preset": "latest",
 
-								"limit": 10,
-								"preset": "latest",
-
-								"query": {
-									"value": 'analysis latest'
-								}
-							}
-						})
-					})
-					return $.when(query);
-				}
+// 								"query": {
+// 									"value": 'analysis latest'
+// 								}
+// 							}
+// 						})
+// 					})
+// 					return $.when(query);
+// 				} -->
 			
 
 
