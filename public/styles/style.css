@@ -453,3 +453,7 @@ p {
   font-size: 1.45rem;
   font-family: 'Varela', sans-serif;
   line-height: 1.5; }
+
+.id{
+  font-size:0;
+}

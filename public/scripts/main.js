@@ -244,7 +244,7 @@ app.events = function () {
             const removeVulnerableGroup = searchGroupKey.indexOf(vulnerableGroupInput);
             return searchGroupKey.splice(removeVulnerableGroup, 1);
         };
-    })
+    });
 
     //Listen for when submit button is clicked to get their results
     $(".submitSearch").on("click", async function (e) {
@@ -276,6 +276,8 @@ app.events = function () {
                 finalResults[i].date = (resultsData[i].fields.date.original).substring(0, 10);
                 //put all the countries into an array in the object
                 finalResults[i].country = resultsData[i].fields.primary_country.name;
+                //get id for searching later
+                finalResults[i].id = resultsData[i].id;
                 //put all the vulnerable groups into an array in the object
                 let vulnerableGroups = []
                 for (let x = 0; x < resultsData[i].fields.vulnerable_groups.length; x++) {
@@ -306,36 +308,47 @@ app.events = function () {
 
                 $('.resultsList').append(`
                     <li class="resultListItem">
-                        <h5 class="titleHeading"><span class="highlight">Title</span>: ${eachResult.disasterName}</h5>
+                        <h5 class="titleHeading"><span class="highlight">Title</span>: <span class="disasterName">${eachResult.disasterName}</span></h5>
                         <h6 class="disasterHeading"><span class="highlight">Disaster Category</span>: ${eachResult.disasterType}</h6>
                         <h6 class="dateHeading"><span class="highlight">Date</span>: ${eachResult.date}</h6>
                         <h6 class="vulnerableGroupHeading"><span class="highlight">Vulnerable Group(s)</span>: ${eachResult.vulnerableGroups}</h6>
                         <button class="readMore">Read More</button>
+                        <ul class="${eachResult.id} id">${eachResult.id}</ul>
                     </li>`);
 
-                    $(".readMore").on("click", async function (e) {
-                        e.preventDefault();
-                        const getArticles = await app.getArticles(`${eachResult.disasterName}`);
-                        $.when(
-                            getArticles
-                        ).then(function (article) {
-                            articles.title=article.data[0].fields.title;
-                            articles.body=article.data[0].fields["body-html"];
-                            articles.link=article.data[0].fields.origin;
-                            console.log(articles);
-
-                        })
-                    })
-                // Using "charities" array, create a function that connects country name with charities and append results to page
+                    // Using "charities" array, create a function that connects country name with charities and append results to page
                 charities.forEach((charity) => {
-
+                    
                     if (charity.country === eachResult.country) {
-                        console.log(charity.text);
-
                         $('.resultsList').append(`<li class="resultListItem"><p class="charities">Organizations for <span class="highlight">${charity.country}</span>: ${charity.text}</p></li>`);
                     }
                 });
 
+            });
+
+            $(".readMore").on("click", async function (e) {
+                e.preventDefault();
+                const disasterSearchName = (`${$(this).closest(".resultListItem").find("h5").find(".disasterName").text()}`);
+                const disasterId = (`${$(this).closest(".resultListItem").find(".id").text()}`);
+                const getArticles = await app.getArticles(`${disasterSearchName}`);
+                $.when(
+                    getArticles
+                ).then(
+                    function (article) {
+                        articles.title = article.data[0].fields.title;
+                        articles.body = article.data[0].fields["body-html"];
+                        articles.link = article.data[0].fields.origin;
+                        article.data.forEach((eachArticle)=>{
+                            console.log(eachArticle.fields.title)
+                            $(`.${disasterId}`).append(`
+                                    <li>
+                                        <h4 class="articleTitle">${eachArticle.fields.title}</h4>
+                                        <p>${eachArticle.fields["body-html"].substring(0, 260)}...</p>
+                                        <a href="${eachArticle.fields.origin}" class="articleLink">Go to article</a>
+                                    </li>
+                                    `);
+                        })
+                    })
             })
         })
     })
@@ -352,7 +365,7 @@ app.getDisasterInfoCountries = (...query) => {
             method: 'GET',
             dataType: 'json',
             data: {
-
+                
                 "filter": {
                     operator: 'AND',
                     conditions: [
@@ -372,16 +385,17 @@ app.getDisasterInfoCountries = (...query) => {
                             "field": "disaster.type.name"
                         }
                     ],
-
+                    
                 },
-
+                
                 "fields": {
                     "include": [
                         "disaster.name",
                         "disaster.type.name",
                         "date.original",
                         "primary_country.name",
-                        "vulnerable_groups.name"
+                        "vulnerable_groups.name",
+                        "disaster.id"
                     ]
                 },
 
@@ -390,10 +404,10 @@ app.getDisasterInfoCountries = (...query) => {
                     "name": "English",
                     "code": "en"
                 },
-
-                "limit": 1000,
+                
+                "limit": 10,
                 "preset": "latest",
-
+                
                 "query": {
                     "value": 'analysis latest'
                 }
@@ -410,7 +424,7 @@ app.getArticles = (disaster) => {
         method: 'GET',
         dataType: 'json',
         data: {
-
+            
             "filter": {
                 operator: 'AND',
                 conditions: [
@@ -424,9 +438,9 @@ app.getArticles = (disaster) => {
                         "operator": "OR"
                     },
                 ],
-
+                
             },
-
+            
             "fields": {
                 "include": [
                     "headline.title",
@@ -434,16 +448,16 @@ app.getArticles = (disaster) => {
                     "origin"
                 ]
             },
-
+            
             "language": {
                 "id": 267,
                 "name": "English",
                 "code": "en"
             },
-
-            "limit": 10,
+            
+            "limit": 5,
             "preset": "latest",
-
+            
             "query": {
                 "value": 'analysis latest'
             }
